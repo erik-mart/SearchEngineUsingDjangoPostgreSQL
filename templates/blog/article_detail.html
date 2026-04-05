@@ -1,0 +1,30 @@
+{% extends 'blog/base.html' %}
+{% load markdown_extras %}
+
+{% block title %}{{ article.title }} - Blog{% endblock %}
+
+{% block content %}
+    <a href="{% url 'blog:article_list' %}" style="color: #3498db; text-decoration: none; margin-bottom: 1rem; display: inline-block;">← Back to Articles</a>
+
+    <article>
+        <h2>{{ article.title }}</h2>
+        <div class="article-date">
+            📅 {{ article.created_at|date:"F j, Y H:i" }}
+        </div>
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #ddd;">
+        <div class="article-content article-markdown" style="font-size: 1.1rem; line-height: 1.8;">
+            {{ article.content|markdownify }}
+        </div>
+    </article>
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #ddd;">
+
+    <div style="background-color: #ecf0f1; padding: 1rem; border-radius: 4px; margin-top: 2rem;">
+        <h3>About this article</h3>
+        <p>
+            <strong>Created:</strong> {{ article.created_at|date:"F j, Y \a\t H:i" }}<br>
+            <strong>Article ID:</strong> {{ article.pk }}
+        </p>
+    </div>
+{% endblock %}
+

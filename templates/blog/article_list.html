@@ -1,0 +1,51 @@
+{% extends 'blog/base.html' %}
+{% load markdown_extras %}
+
+{% block title %}Articles - Blog{% endblock %}
+
+{% block content %}
+    <h2>All Articles</h2>
+
+    <form class="search-form" method="get" action="{% url 'blog:article_search' %}">
+        <label class="sr-only" for="article-list-search">Search articles</label>
+        <input id="article-list-search" type="text" name="q" placeholder="Search articles..." value="">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if articles %}
+        {% for article in articles %}
+            <div class="article">
+                <h2><a href="{% url 'blog:article_detail' article.pk %}">{{ article.title }}</a></h2>
+                <div class="article-date">
+                    📅 {{ article.created_at|date:"F j, Y H:i" }}
+                </div>
+                <div class="article-content">
+                    {{ article.content|markdown_preview:50 }}
+                    <br><br>
+                    <a href="{% url 'blog:article_detail' article.pk %}">Read more →</a>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if is_paginated %}
+            <div class="article" style="text-align: center;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">&larr; Previous</a>
+                {% endif %}
+
+                <span style="margin: 0 1rem; color: #7f8c8d;">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Next &rarr;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="no-articles">
+            <p>No articles found. Please create one in the admin panel.</p>
+        </div>
+    {% endif %}
+{% endblock %}
+

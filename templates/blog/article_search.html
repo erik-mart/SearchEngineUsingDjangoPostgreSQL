@@ -1,0 +1,85 @@
+{% extends 'blog/base.html' %}
+{% load markdown_extras %}
+
+{% block title %}Search Articles - Blog{% endblock %}
+
+{% block content %}
+    <h2>Search Articles</h2>
+
+    <form class="search-form" method="get">
+        <label class="sr-only" for="article-search-query">Search articles by title or content</label>
+        <input id="article-search-query" type="text" name="q" placeholder="Search articles by title or content..." value="{{ query }}">
+        <label class="sr-only" for="indexed-sort-select">Indexed result sort mode</label>
+        <select id="indexed-sort-select" name="indexed_sort">
+            <option value="relevance" {% if indexed_sort == 'relevance' %}selected{% endif %}>Indexed: Relevance</option>
+            <option value="newest" {% if indexed_sort == 'newest' %}selected{% endif %}>Indexed: Newest</option>
+        </select>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+        <div style="margin-bottom: 1rem; color: #7f8c8d;">
+            <strong>Results for:</strong> "{{ query }}"
+            {% if indexed_count is not None %}
+                <strong>({{ indexed_count }} indexed matches, top {{ preview_size }} shown)</strong>
+            {% else %}
+                <strong>({{ normal_count }} matches, top {{ preview_size }} shown)</strong>
+            {% endif %}
+            <br>
+            {% if normal_count_ms is not None and normal_fetch_ms is not None %}
+                Normal query (`icontains`):
+                <strong>count {{ normal_count }} in {{ normal_count_ms|floatformat:2 }} ms</strong>,
+                <strong>fetch {{ preview_size }} in {{ normal_fetch_ms|floatformat:2 }} ms</strong>
+            {% endif %}
+            {% if indexed_count_ms is not None and indexed_fetch_ms is not None %}
+                <br>
+                Indexed query (`tsvector` + GIN):
+                <strong>count {{ indexed_count }} in {{ indexed_count_ms|floatformat:2 }} ms</strong>,
+                <strong>fetch {{ preview_size }} in {{ indexed_fetch_ms|floatformat:2 }} ms</strong>
+                {% if indexed_sorted_by == 'relevance' %}
+                    <br>
+                    <em>Indexed results are sorted by relevance score (then by newest date).</em>
+                {% elif indexed_sorted_by == 'newest' %}
+                    <br>
+                    <em>Indexed results are sorted by newest date (relevance ranking disabled for display order).</em>
+                {% endif %}
+            {% endif %}
+            {% if indexed_count is None %}
+                <br>
+                <em>Indexed benchmark is available when using PostgreSQL.</em>
+            {% endif %}
+            <br>
+            <a href="{% url 'blog:search_explain_debug' %}?q={{ query|urlencode }}&indexed_sort={{ indexed_sort|urlencode }}">
+                View EXPLAIN plans for this search
+            </a>
+        </div>
+    {% endif %}
+
+    {% if articles %}
+        {% for article in articles %}
+            <div class="article">
+                <h2><a href="{% url 'blog:article_detail' article.pk %}">{{ article.title }}</a></h2>
+                <div class="article-date">
+                    📅 {{ article.created_at|date:"F j, Y H:i" }}
+                    {% if active_method == 'indexed' and indexed_sorted_by == 'relevance' and article.rank is not None %}
+                        | Relevance: {{ article.rank|floatformat:4 }}
+                    {% endif %}
+                </div>
+                <div class="article-content">
+                    {{ article.content|markdown_preview:50 }}
+                    <br><br>
+                    <a href="{% url 'blog:article_detail' article.pk %}">Read more →</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% elif query %}
+        <div class="no-articles">
+            <p>No articles found matching "{{ query }}". Try a different search term.</p>
+        </div>
+    {% else %}
+        <div class="no-articles">
+            <p>Enter a search term to find articles.</p>
+        </div>
+    {% endif %}
+{% endblock %}
+

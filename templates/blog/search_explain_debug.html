@@ -1,0 +1,44 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Search EXPLAIN Debug{% endblock %}
+
+{% block content %}
+    <h2>Search EXPLAIN Debug</h2>
+    <p style="margin-top: 0.5rem; color: #666;">
+        Staff-only debug page for query-plan comparison.
+    </p>
+
+    <form class="search-form" method="get">
+        <label class="sr-only" for="debug-search-query">Search query</label>
+        <input id="debug-search-query" type="text" name="q" placeholder="Enter search term..." value="{{ query }}">
+        <label class="sr-only" for="debug-indexed-sort">Indexed sort mode</label>
+        <select id="debug-indexed-sort" name="indexed_sort">
+            <option value="relevance" {% if indexed_sort == 'relevance' %}selected{% endif %}>Indexed: Relevance</option>
+            <option value="newest" {% if indexed_sort == 'newest' %}selected{% endif %}>Indexed: Newest</option>
+        </select>
+        <button type="submit">Explain</button>
+    </form>
+
+    {% if query %}
+        <div class="article">
+            <h3>Normal Query Plan (`icontains`)</h3>
+            <pre style="white-space: pre-wrap; margin-top: 0.75rem;">{{ normal_plan }}</pre>
+        </div>
+
+        <div class="article">
+            <h3>Indexed Query Plan (`tsvector` + GIN)</h3>
+            {% if is_postgresql %}
+                <pre style="white-space: pre-wrap; margin-top: 0.75rem;">{{ indexed_plan }}</pre>
+            {% else %}
+                <p style="margin-top: 0.75rem; color: #7f8c8d;">
+                    Indexed EXPLAIN is available only when using PostgreSQL.
+                </p>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="no-articles">
+            <p>Enter a query and click Explain to inspect query plans.</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
